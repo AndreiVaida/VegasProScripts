@@ -104,26 +104,19 @@ public class EntryPoint {
     }
 
     private void MoveEvent(TrackEvent ev, VideoTrack targetTrack) {
-        if (ev.Track == targetTrack)
-            return;
+        var group = ev.Group;
 
-        var start = ev.Start;
-        var length = ev.Length;
-
-        var media = ev.ActiveTake.Media;
-        var stream = media.Streams.Count > 0 ? media.Streams[0] : null;
-
-        if (stream == null) {
-            _logger.Info("ERROR: Media has zero streams: " + media.FilePath);
+        if (group == null || group.Count <= 1) {
+            ev.Track = targetTrack;
             return;
         }
 
-        // Create new event on target track
-        var newEv = targetTrack.AddVideoEvent(start, length);
-        newEv.AddTake(stream);
-
-        ev.Track.Events.Remove(ev);
-    }    
+        // Move all grouped events together
+        foreach (var trackEvent in group) {
+            if (trackEvent.Track != targetTrack)
+                trackEvent.Track = targetTrack;
+        }
+    }
 }
 
 class Logger {
