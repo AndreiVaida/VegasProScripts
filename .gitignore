@@ -1,1 +1,10 @@
 Logs/
+.vs
+.vs/*
+*.ide
+.vs/Renamer/v16/Server/sqlite3/storage.ide
+.idea/*
+.idea/
+build/
+[Bb]in/
+[Oo]bj/
