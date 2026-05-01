@@ -14,9 +14,10 @@ namespace AndreiScripts.MoveEvents {
 
                 var sonyTrack = FindOrCreateTrack(vegas, "HLG");
                 var smartphoneTrack = FindOrCreateTrack(vegas, "Smartphone");
+                var sonyHdrCx405Track = FindOrCreateTrack(vegas, "Sony HDR-CX405");
                 var photoTrack = FindOrCreateTrack(vegas, "Poze");
 
-                var moves = GetEventsToMove(sonyTrack, smartphoneTrack, photoTrack);
+                var moves = GetEventsToMove(vegas, sonyTrack, smartphoneTrack, sonyHdrCx405Track, photoTrack);
                 MoveEventsToTheirTrack(moves);
             }
             catch (Exception e) {
@@ -28,9 +29,9 @@ namespace AndreiScripts.MoveEvents {
             }
         }
 
-        private List<MoveRequest> GetEventsToMove(Track sourceTrack, VideoTrack smartphoneTrack, VideoTrack photoTrack) {
+        private List<MoveRequest> GetEventsToMove(Vegas vegas, VideoTrack sonyTrack, VideoTrack smartphoneTrack, VideoTrack sonyHdrCx405Track, VideoTrack photoTrack) {
             var moves = new List<MoveRequest>();
-            var events = GetSelectedEvents(sourceTrack.Events);
+            var events = GetSelectedVideoEvents(vegas);
 
             foreach (var ev in events) {
                 if (ev.ActiveTake == null) {
@@ -43,30 +44,42 @@ namespace AndreiScripts.MoveEvents {
                 if (IsPhoto(name)) {
                     moves.Add(new MoveRequest(ev, photoTrack, name));
                 }
+                else if (IsHlgVideo(ev, name)) {
+                    moves.Add(new MoveRequest(ev, sonyTrack, name));
+                }
                 else if (IsSmartphoneVideo(ev, name)) {
                     moves.Add(new MoveRequest(ev, smartphoneTrack, name));
+                }
+                else if (IsSonyHdrCx405Video(ev)) {
+                    moves.Add(new MoveRequest(ev, sonyHdrCx405Track, name));
+                }
+                else {
+                    _logger.Warning("Unknown event '" + name + "' | Start=" + ev.Start.ToString());
                 }
             }
 
             return moves;
         }
 
-        private List<TrackEvent> GetSelectedEvents(TrackEvents events) {
-            var selected = new List<TrackEvent>();
+        private static List<VideoEvent> GetSelectedVideoEvents(Vegas vegas) {
+            var list = new List<VideoEvent>();
 
-            foreach (var ev in events)
-                if (ev.Selected)
-                    selected.Add(ev);
+            foreach (Track track in vegas.Project.Tracks)
+                foreach (TrackEvent @event in track.Events)
+                    if (@event.Selected) {
+                        VideoEvent videoEvent = @event as VideoEvent;
+                        if (videoEvent != null)
+                            list.Add(videoEvent);
+                    }
 
-            return selected;
+            return list;
         }
-
 
         private void MoveEventsToTheirTrack(List<MoveRequest> moves) {
             foreach (var req in moves) {
                 try {
-                    MoveEvent(req.ev, req.targetTrack);
-                    _logger.Info("Moved " + req.name + " → " + req.targetTrack.Name);
+                    var isMoved = MoveEvent(req.ev, req.targetTrack);
+                    _logger.Info((isMoved ? "Moved " : "Not moved ") + req.name + " → " + req.targetTrack.Name);
                 }
                 catch (Exception ex) {
                     _logger.Error("Cannot move " + req.name + ": " + ex.Message + " | " + ex.ToString());
@@ -94,8 +107,20 @@ namespace AndreiScripts.MoveEvents {
             return !IsPhoto(name);
         }
 
+        private static bool IsHlgVideo(TrackEvent ev, string name) {
+            return name.StartsWith("C") || (IsVideo(name) && IsSilverCrestVideo(ev.ActiveTake.Media.FilePath));
+        }
+
         private static bool IsSmartphoneVideo(TrackEvent ev, string name) {
-            return (name.StartsWith("202") || name.StartsWith("VID_")) && (IsVideo(name) && !IsSilverCrestVideo(ev.ActiveTake.Media.FilePath));
+            return (name.StartsWith("202") || name.StartsWith("VID_")) && (
+                IsVideo(name) &&
+                !IsSilverCrestVideo(ev.ActiveTake.Media.FilePath) &&
+                !IsSonyHdrCx405Video(ev)
+                );
+        }
+
+        private static bool IsSonyHdrCx405Video(TrackEvent ev) {
+            return ev.ActiveTake.Media.FilePath.Contains("Sony HDR-CX405");
         }
 
         private static bool IsSilverCrestVideo(string filePath) {
@@ -111,19 +136,25 @@ namespace AndreiScripts.MoveEvents {
             return newTrack;
         }
 
-        private void MoveEvent(TrackEvent ev, VideoTrack targetTrack) {
+        private bool MoveEvent(TrackEvent ev, VideoTrack targetTrack) {
+            if (ev.Track == targetTrack)
+                return false;
+
             var group = ev.Group;
 
             if (group == null || group.Count <= 1) {
                 ev.Track = targetTrack;
-                return;
+                return true;
             }
 
-            // Move all grouped events together
+            // Move all grouped events together, but only if they're video events
             foreach (var trackEvent in group) {
-                if (trackEvent.Track != targetTrack)
+                if (trackEvent.Track != targetTrack && trackEvent is VideoEvent) {
                     trackEvent.Track = targetTrack;
+                }
             }
+
+            return true;
         }
     }
 
@@ -145,6 +176,10 @@ namespace AndreiScripts.MoveEvents {
 
         public void Info(string text) {
             Log(text, "INFO");
+        }
+
+        public void Warning(string text) {
+            Log(text, "WARNING");
         }
 
         public void Error(string text) {

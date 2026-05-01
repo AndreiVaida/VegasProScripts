@@ -12,12 +12,12 @@ This repository can be placed in the `Vegas Script Menu\` folder so that Vegas c
 ### ♪ Move selected events to their track
 This script moves all selected events to their track. Working tracks:
 - `HLG` - for Sony Alpha and SilverCrest videos
-- `Poze` - for photos
 - `Smartphone` - for smartphone videos
+- `Sony HDR-CX405` - for Sony HDR-CX405 videos
+- `Poze` - for photos
 
-It assumes all selected events (photos and videos) are in the `HLG` track.
-Photos and smartphone videos are moved to their tracks.
-Sony videos are already on the correct track.
+The selected events (photos and videos) can be on any track.
+Photos and videos are moved to their tracks.
 
 ### ♪ Stabilize selected events
 This script adds the new stabilization Media FX to the selected events.
