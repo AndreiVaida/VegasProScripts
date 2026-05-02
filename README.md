@@ -31,3 +31,13 @@ Then the user needs to open the Media FX window manually and click the Apply but
 
 #### 💡 Create keyboard shortcut
 Options → Customize Keyboard... → search for stabilization script → select Global → assign shortcut (e.g. `Alt + S`)
+
+### ♪ Crop and Zoom Photos
+This script crops the image to _"Match output aspect"_ and adds the _"Picture In Picture"_ Video FX to zoom in the photo by 10% in 10 seconds.<br>
+Applied for all selected events.
+
+1. Crop to "Match output aspect" (usually 16:9).<br>
+
+1. Add "Picture In Picture" Video FX and and Animate "Scale in X" using 2 keyframes:
+	1. at 0:00;00 set `Scale=1`
+	1. at 0:10;00 (after 10 seconds) set `Scale=1.1` (i.e. zoom 10%)
