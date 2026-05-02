@@ -32,13 +32,18 @@ namespace AndreiScripts.StabilizeEvents {
 		private void AddStabilization(Vegas vegas, VideoEvent videoEvent) {
 			var originalName = Path.GetFileName(videoEvent.ActiveTake.Media.FilePath);
 
-			var extendedTime = ExtendEvent(videoEvent);
-			var subclip = CreateSubclip(vegas.Project, videoEvent);
-			ShrinkEvent(videoEvent, extendedTime);
+			try {
+				var extendedTime = ExtendEvent(videoEvent);
+				var subclip = CreateSubclip(vegas.Project, videoEvent);
+				ShrinkEvent(videoEvent, extendedTime);
 
-			ApplyStabilizationMediaFx(vegas, subclip);
+				ApplyStabilizationMediaFx(vegas, subclip);
 
-			_logger.Info("Stabilized '" + originalName + "' (extended by " + extendedTime.ToString().Substring(6) + ")");
+				_logger.Info("Stabilized '" + originalName + "' (extended by " + extendedTime.ToString().Substring(6) + ")");
+			}
+			catch (Exception e) {
+				_logger.Error("cannot stabilize '" + originalName + "'. " + e.Message + " | " + e.ToString());
+			}
 		}
 
 		private static List<VideoEvent> GetSelectedVideoEvents(Vegas vegas) {
