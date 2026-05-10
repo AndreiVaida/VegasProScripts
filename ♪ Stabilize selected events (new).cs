@@ -94,16 +94,16 @@ namespace AndreiScripts.StabilizeEvents {
 		}
 
 		private void ApplyStabilizationMediaFx(Vegas vegas, Media media) {
-			var plugIn = FindPlugIn(vegas, "{Svfx:de.magix:Stabilize}");				
+			var plugIn = FindPlugIn(vegas, "Video Stabilization");				
 			var fx = media.Effects.AddEffect(plugIn);
 		}
 
-		private PlugInNode FindPlugIn(Vegas vegas, string uniqueID) {
+		private PlugInNode FindPlugIn(Vegas vegas, string name) {
 			foreach (var node in vegas.VideoFX) {
-				if (node.UniqueID == uniqueID)
+                if (node.Name == name)
 					return node;
 			}
-            throw new Exception("Video Stabilization plug-in not found. UniqueID=" + uniqueID);
+            throw new Exception("Video Stabilization plug-in not found.");
         }
 
         private static bool IsPhoto(string name) {
